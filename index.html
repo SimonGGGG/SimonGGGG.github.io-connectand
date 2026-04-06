@@ -1215,9 +1215,7 @@
     <p style="font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #7494e6; margin-bottom: 12px; font-family: Arial, sans-serif;">Get in touch</p>
     <h2 style="font-family: Arial, sans-serif; font-size: 28px; font-weight: 500; color: #4A5C3E; margin-bottom: 8px; line-height: 1.2;">Let's Connect</h2>
     <p style="font-size: 14px; color: #4A6B4E; margin-bottom: 32px; line-height: 1.6; font-family: Arial, sans-serif;">Leave your details and we'll be in touch with upcoming session dates in Cape Town.</p>
-    <form name="workshop-signup" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="signup-form">
-      <input type="hidden" name="form-name" value="workshop-signup">
-      <p style="display:none"><input name="bot-field"></p>
+    <form id="signup-form">
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 12px; font-weight: 500; color: #4A5C3E; margin-bottom: 6px; font-family: Arial, sans-serif; letter-spacing: 0.04em;">Full name</label>
         <input type="text" name="name" required placeholder="Your name" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(74,92,62,0.2); border-radius: 10px; font-size: 14px; font-family: Arial, sans-serif; color: #4A5C3E; background: white; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#7494e6'" onblur="this.style.borderColor='rgba(74,92,62,0.2)'">
@@ -1302,18 +1300,45 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Form submission
+  // Form submission → Google Sheets
+  // ⚠️ Paste your Apps Script Web App URL below
+  const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyxZqKVN5gAnkQaBbY5FMSy3v4E_2qH-vJEVGEaCYRXNMu7AwtoTpjrS4h7UCt9nnQ/exec';
+
   const form = document.getElementById('signup-form');
+  const submitBtn = form.querySelector('button[type="submit"]');
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = new FormData(form);
+
+    // Collect form data as JSON
+    const payload = {
+      name:    form.querySelector('[name="name"]').value.trim(),
+      email:   form.querySelector('[name="email"]').value.trim(),
+      phone:   form.querySelector('[name="phone"]').value.trim(),
+      message: form.querySelector('[name="message"]').value.trim()
+    };
+
+    // Show loading state
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Sending…';
+    submitBtn.disabled = true;
+
     try {
-      await fetch('/', { method: 'POST', body: data });
+      await fetch(SHEET_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',       // Apps Script requires no-cors
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      // no-cors means we can't read the response, but if we get here it worked
       form.style.display = 'none';
       document.getElementById('form-success').style.display = 'block';
       setTimeout(closeModal, 3000);
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('Something went wrong. Please try again.');
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
     }
   });
 </script>
